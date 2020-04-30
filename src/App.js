@@ -1,58 +1,67 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
-import Course from './components/Course';
+import Note from './components/Note';
 
 function App() {
-    const courses = [
+    const [notes, setNotes] = useState([
         {
-            name: 'Half Stack application development',
             id: 1,
-            parts: [
-                {
-                    name: 'Fundamentals of React',
-                    exercises: 10,
-                    id: 1,
-                },
-                {
-                    name: 'Using props to pass data',
-                    exercises: 7,
-                    id: 2,
-                },
-                {
-                    name: 'State of a component',
-                    exercises: 14,
-                    id: 3,
-                },
-                {
-                    name: 'Redux',
-                    exercises: 11,
-                    id: 4,
-                },
-            ],
+            content: 'HTML is easy',
+            date: '2019-05-30T17:30:31.098Z',
+            important: true,
         },
         {
-            name: 'Node.js',
             id: 2,
-            parts: [
-                {
-                    name: 'Routing',
-                    exercises: 3,
-                    id: 1,
-                },
-                {
-                    name: 'Middlewares',
-                    exercises: 7,
-                    id: 2,
-                },
-            ],
+            content: 'Browser can execute only Javascript',
+            date: '2019-05-30T18:39:34.091Z',
+            important: false,
         },
-    ];
+        {
+            id: 3,
+            content: 'GET and POST are the most important methods of HTTP protocol',
+            date: '2019-05-30T19:20:14.298Z',
+            important: true,
+        },
+    ]);
+
+    const [newNote, setNewNote] = useState('add new note...');
+    const [showAll, setShowAll] = useState(true);
+
+    const notesToShow = showAll ? notes : notes.filter((note) => note.important);
+
+    function addNote(e) {
+        e.preventDefault();
+        const note = {
+            id: notes.length + 1,
+            content: newNote,
+            date: new Date().toISOString(),
+            important: Math.random() < 0.5,
+        };
+        setNotes(notes.concat(note));
+        setNewNote('');
+    }
+
+    function handleNoteChange(e) {
+        setNewNote(e.target.value);
+    }
 
     return (
-        <div>
-            {courses.map((course) => (
-                <Course key={course.id} course={course} />
-            ))}
+        <div className="App">
+            <h1>Notes</h1>
+            <div>
+                <button onClick={() => setShowAll(!showAll)}>
+                    show {showAll ? 'important' : 'all'}
+                </button>
+            </div>
+            <ul>
+                {notesToShow.map((note) => (
+                    <Note key={note.id} note={note} />
+                ))}
+            </ul>
+            <form onSubmit={addNote}>
+                <input type="text" value={newNote} onChange={handleNoteChange} />
+                <button>save</button>
+            </form>
         </div>
     );
 }
