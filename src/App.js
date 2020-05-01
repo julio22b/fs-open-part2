@@ -3,83 +3,75 @@ import axios from 'axios';
 import './App.css';
 
 function App() {
-    const [persons, setPersons] = useState([]);
-    const [newName, setNewName] = useState('');
-    const [newPhone, setNewPhone] = useState('');
+    const [countries, setCountries] = useState([]);
     const [filter, setFilter] = useState('');
 
     useEffect(() => {
-        axios.get('http://localhost:3001/persons').then((response) => {
-            setPersons(response.data);
+        axios.get('https://restcountries.eu/rest/v2/all').then((response) => {
+            setCountries(response.data);
         });
     }, []);
 
-    function addPerson(e) {
-        e.preventDefault();
-        const names = persons.map((person) => person.name);
-        names.includes(newName)
-            ? alert(`${newName} is already added to the phonebook`)
-            : setPersons(persons.concat({ name: newName, phone: newPhone }));
-        setNewName('');
-        setNewPhone('');
-    }
-
-    const filteredPhonebook = persons.filter((person) =>
-        person.name.toLocaleLowerCase().includes(filter.toLowerCase()),
+    const filterByName = countries.filter((country) =>
+        country.name.toLowerCase().includes(filter.toLowerCase()),
     );
-
-    const showThis = filter ? filteredPhonebook : persons;
-
+    let countriesToDisplay;
+    let message;
+    if (filterByName.length > 10 && filter) {
+        message = 'too many matches';
+    } else if (filterByName.length <= 10 && filterByName.length > 1) {
+        message = '';
+        countriesToDisplay = filterByName.map((country) => (
+            <Country key={country.name} name={country.name} />
+        ));
+    } else if (filterByName.length === 1) {
+        countriesToDisplay = <Country country={filterByName} />;
+    }
     return (
         <div>
-            <h2>Phonebook</h2>
-            <Filter filter={filter} onChange={(e) => setFilter(e.target.value)} />
-            <AddForm
-                onSubmit={addPerson}
-                newName={newName}
-                newPhone={newPhone}
-                setNewName={(e) => setNewName(e.target.value)}
-                setNewPhone={(e) => setNewPhone(e.target.value)}
-            />
-            <h2>Numbers</h2>
-            {showThis.map((person) => (
-                <Person key={person.name} person={person} />
-            ))}
+            <Filter onChange={(e) => setFilter(e.target.value)} />
+            <div>
+                <p>{message}</p>
+                {countriesToDisplay}
+            </div>
         </div>
     );
 }
 
-function AddForm({ onSubmit, newName, newPhone, setNewName, setNewPhone }) {
-    return (
-        <form onSubmit={onSubmit}>
-            <h3>add new</h3>
-            <div>
-                name: <input value={newName} onChange={setNewName} />
-                <br />
-                <br />
-                phone: <input value={newPhone} onChange={setNewPhone} />
-            </div>
-            <div>
-                <button type="submit">add</button>
-            </div>
-        </form>
-    );
-}
-
-function Filter({ filter, onChange }) {
+function Filter({ onChange }) {
     return (
         <p>
-            find person <input value={filter} onChange={onChange} />
+            <input onChange={onChange} />
         </p>
     );
 }
 
-function Person({ person }) {
+function Country(props) {
     return (
-        <p>
-            {person.name}, {person.phone}
-        </p>
+        <div>
+            {props.name ? (
+                <p>{props.name}</p>
+            ) : (
+                <>
+                    <h2>{props.country[0].name}</h2>
+                    <p>capital {props.country[0].capital}</p>
+                    <p>population {props.country[0].population}</p>
+                    <h3>languages</h3>
+                    <ul>
+                        {props.country[0].languages.map((language) => (
+                            <li key={language.name}>{language.name}</li>
+                        ))}
+                    </ul>
+                    <img src={props.country[0].flag} alt="" style={imgSize} />
+                </>
+            )}
+        </div>
     );
 }
+
+const imgSize = {
+    width: '150px',
+    height: '100px',
+};
 
 export default App;
