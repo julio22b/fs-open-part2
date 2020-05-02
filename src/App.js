@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
+const api_key = process.env.REACT_APP_API_KEY;
+
 function App() {
     const [countries, setCountries] = useState([]);
     const [filter, setFilter] = useState('');
@@ -12,30 +14,102 @@ function App() {
         });
     }, []);
 
-    const filterByName = countries.filter((country) =>
+    const filteredCountries = countries.filter((country) =>
         country.name.toLowerCase().includes(filter.toLowerCase()),
     );
-    let countriesToDisplay;
-    let message;
-    if (filterByName.length > 10 && filter) {
-        message = 'too many matches';
-    } else if (filterByName.length <= 10 && filterByName.length > 1) {
-        message = '';
-        countriesToDisplay = filterByName.map((country) => (
-            <Country key={country.name} name={country.name} />
-        ));
-    } else if (filterByName.length === 1) {
-        countriesToDisplay = <Country country={filterByName} />;
-    }
+
     return (
         <div>
             <Filter onChange={(e) => setFilter(e.target.value)} />
             <div>
-                <p>{message}</p>
-                {countriesToDisplay}
+                <Countries countries={filteredCountries} filter={filter} />
             </div>
         </div>
     );
+}
+
+function Countries({ countries, filter }) {
+    const message = filter ? 'too many countries' : 'search';
+    if (countries.length <= 10 && countries.length > 1) {
+        return (
+            <div>
+                <Country countries={countries} />
+            </div>
+        );
+    } else if (countries.length === 1) {
+        countries = countries[0];
+        return <CountryInfo country={countries} />;
+    } else {
+        return <div>{message}</div>;
+    }
+}
+
+function Country({ countries }) {
+    const [showOneCountry, setShowOneCountry] = useState(false);
+
+    if (showOneCountry) {
+        return <CountryInfo country={showOneCountry} />;
+    }
+
+    return (
+        <div>
+            {countries.map((country) => (
+                <p key={country.name}>
+                    {country.name} <button onClick={() => setShowOneCountry(country)}>show</button>
+                </p>
+            ))}
+        </div>
+    );
+}
+
+function CountryInfo({ country }) {
+    console.log(country);
+    return (
+        <div>
+            <h1>{country.name}</h1>
+            <p>capital: {country.capital}</p>
+            <p>population: {country.population}</p>
+            <h3>languages</h3>
+            <ul>
+                {country.languages.map((language) => (
+                    <li key={language.name}>{language.name}</li>
+                ))}
+            </ul>
+            <img src={country.flag} alt="" style={imgSize} />
+            <WeatherInfo country={country} />
+        </div>
+    );
+}
+
+function WeatherInfo({ country }) {
+    const [weather, setWeather] = useState(false);
+
+    useEffect(() => {
+        axios
+            .get(
+                `https://api.openweathermap.org/data/2.5/weather?q=${country.capital}&appid=${api_key}`,
+            )
+            .then((response) => {
+                setWeather(response.data);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }, []);
+    if (weather) {
+        return (
+            <div>
+                <h2>weather in {country.capital}</h2>
+                <p>
+                    <strong>temperature:</strong> {weather.main.temp} f
+                </p>
+                <p>
+                    <strong>wind:</strong> {weather.wind.speed} mph
+                </p>
+            </div>
+        );
+    }
+    return null;
 }
 
 function Filter({ onChange }) {
@@ -43,29 +117,6 @@ function Filter({ onChange }) {
         <p>
             <input onChange={onChange} />
         </p>
-    );
-}
-
-function Country(props) {
-    return (
-        <div>
-            {props.name ? (
-                <p>{props.name}</p>
-            ) : (
-                <>
-                    <h2>{props.country[0].name}</h2>
-                    <p>capital {props.country[0].capital}</p>
-                    <p>population {props.country[0].population}</p>
-                    <h3>languages</h3>
-                    <ul>
-                        {props.country[0].languages.map((language) => (
-                            <li key={language.name}>{language.name}</li>
-                        ))}
-                    </ul>
-                    <img src={props.country[0].flag} alt="" style={imgSize} />
-                </>
-            )}
-        </div>
     );
 }
 
