@@ -7,3 +7,17 @@ ul li {
     padding-top: 3px;
     font-size: 15px;
 }
+
+.success {
+    border: 2px solid green;
+    background-color: #cfcfcf;
+    color: green;
+    padding: 1em;
+}
+
+.failure {
+    border: 2px solid red;
+    background-color: #cfcfcf;
+    color: red;
+    padding: 1em;
+}

@@ -8,6 +8,7 @@ function App() {
     const [newName, setNewName] = useState('');
     const [newNumber, setNewNumber] = useState('');
     const [filter, setFilter] = useState('');
+    const [message, setMessage] = useState(null);
 
     useEffect(() => {
         personService.getAll().then((initPhonebook) => {
@@ -18,10 +19,6 @@ function App() {
     function addPerson(e) {
         e.preventDefault();
         const names = persons.map((person) => person.name);
-        const newPerson = {
-            name: newName,
-            number: newNumber,
-        };
 
         if (names.includes(newName)) {
             const confirmation = window.confirm(
@@ -37,13 +34,25 @@ function App() {
                                 person.id !== updatedPerson.id ? person : updatedPerson,
                             ),
                         );
+                    })
+                    .catch((error) => {
+                        setMessage(`${person.name} has already been removed from the server`);
                     });
+                setMessage(`${person.name}'s number has been updated`);
             }
         } else {
+            const newPerson = {
+                name: newName,
+                number: newNumber,
+            };
             personService.create(newPerson).then((returnedPerson) => {
                 setPersons(persons.concat(returnedPerson));
             });
+            setMessage(`${newPerson.name} has been added to the phonebook`);
         }
+        setTimeout(() => {
+            setMessage(null);
+        }, 5000);
         setNewName('');
         setNewNumber('');
     }
@@ -67,6 +76,7 @@ function App() {
     return (
         <div>
             <h2>Phonebook</h2>
+            <Notification message={message} />
             <Filter filter={filter} onChange={(e) => setFilter(e.target.value)} />
             <AddForm
                 onSubmit={addPerson}
@@ -119,6 +129,13 @@ function Person({ name, number, handleClick }) {
             {name}, {number} <button onClick={handleClick}>delete</button>
         </p>
     );
+}
+
+function Notification({ message }) {
+    if (message === null) {
+        return null;
+    }
+    return <p className={message.includes('removed') ? 'failure' : 'success'}>{message}</p>;
 }
 
 export default App;
