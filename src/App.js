@@ -1,27 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import './App.css';
+import personService from './services/personService';
+import './index.css';
 
 function App() {
     const [persons, setPersons] = useState([]);
     const [newName, setNewName] = useState('');
-    const [newPhone, setNewPhone] = useState('');
+    const [newNumber, setNewNumber] = useState('');
     const [filter, setFilter] = useState('');
 
     useEffect(() => {
-        axios.get('http://localhost:3001/persons').then((response) => {
-            setPersons(response.data);
+        personService.getAll().then((initPhonebook) => {
+            setPersons(initPhonebook);
         });
     }, []);
 
     function addPerson(e) {
         e.preventDefault();
         const names = persons.map((person) => person.name);
-        names.includes(newName)
-            ? alert(`${newName} is already added to the phonebook`)
-            : setPersons(persons.concat({ name: newName, phone: newPhone }));
+        const newPerson = {
+            name: newName,
+            number: newNumber,
+        };
+
+        if (names.includes(newName)) {
+            const confirmation = window.confirm(
+                `${newName} is already added to the phonebook, replace the old number with a new one?`,
+            );
+            const person = persons.find((person) => person.name === newName);
+            if (confirmation) {
+                personService
+                    .update({ ...person, number: newNumber }, person.id)
+                    .then((updatedPerson) => {
+                        setPersons(
+                            persons.map((person) =>
+                                person.id !== updatedPerson.id ? person : updatedPerson,
+                            ),
+                        );
+                    });
+            }
+        } else {
+            personService.create(newPerson).then((returnedPerson) => {
+                setPersons(persons.concat(returnedPerson));
+            });
+        }
         setNewName('');
-        setNewPhone('');
+        setNewNumber('');
     }
 
     const filteredPhonebook = persons.filter((person) =>
@@ -30,6 +54,16 @@ function App() {
 
     const showThis = filter ? filteredPhonebook : persons;
 
+    function removePerson(id, name) {
+        const confirmation = window.confirm(`delete ${name}?`);
+        if (confirmation) {
+            personService.remove(id).then((response) => {
+                console.log(response);
+            });
+            setPersons(persons.filter((person) => person.id !== id));
+        }
+    }
+
     return (
         <div>
             <h2>Phonebook</h2>
@@ -37,19 +71,24 @@ function App() {
             <AddForm
                 onSubmit={addPerson}
                 newName={newName}
-                newPhone={newPhone}
+                newNumber={newNumber}
                 setNewName={(e) => setNewName(e.target.value)}
-                setNewPhone={(e) => setNewPhone(e.target.value)}
+                setNewNumber={(e) => setNewNumber(e.target.value)}
             />
             <h2>Numbers</h2>
             {showThis.map((person) => (
-                <Person key={person.name} person={person} />
+                <Person
+                    key={person.name}
+                    name={person.name}
+                    number={person.number}
+                    handleClick={() => removePerson(person.id, person.name)}
+                />
             ))}
         </div>
     );
 }
 
-function AddForm({ onSubmit, newName, newPhone, setNewName, setNewPhone }) {
+function AddForm({ onSubmit, newName, newNumber, setNewName, setNewNumber }) {
     return (
         <form onSubmit={onSubmit}>
             <h3>add new</h3>
@@ -57,7 +96,7 @@ function AddForm({ onSubmit, newName, newPhone, setNewName, setNewPhone }) {
                 name: <input value={newName} onChange={setNewName} />
                 <br />
                 <br />
-                phone: <input value={newPhone} onChange={setNewPhone} />
+                phone: <input value={newNumber} onChange={setNewNumber} />
             </div>
             <div>
                 <button type="submit">add</button>
@@ -74,10 +113,10 @@ function Filter({ filter, onChange }) {
     );
 }
 
-function Person({ person }) {
+function Person({ name, number, handleClick }) {
     return (
         <p>
-            {person.name}, {person.phone}
+            {name}, {number} <button onClick={handleClick}>delete</button>
         </p>
     );
 }
