@@ -36,7 +36,9 @@ function App() {
                         );
                     })
                     .catch((error) => {
-                        setMessage(`${person.name} has already been removed from the server`);
+                        setMessage(
+                            `Error. ${person.name} has already been removed from the server`,
+                        );
                     });
                 setMessage(`${person.name}'s number has been updated`);
             }
@@ -45,10 +47,17 @@ function App() {
                 name: newName,
                 number: newNumber,
             };
-            personService.create(newPerson).then((returnedPerson) => {
-                setPersons(persons.concat(returnedPerson));
-            });
-            setMessage(`${newPerson.name} has been added to the phonebook`);
+            personService
+                .create(newPerson)
+                .then((returnedPerson) => {
+                    setPersons(persons.concat(returnedPerson));
+                    setMessage(`${newPerson.name} has been added to the phonebook`);
+                })
+                .catch((err) =>
+                    setMessage(
+                        `Validation Error. Name bust be at least 3 characters long and number 8 digits long`,
+                    ),
+                );
         }
         setTimeout(() => {
             setMessage(null);
@@ -135,7 +144,7 @@ function Notification({ message }) {
     if (message === null) {
         return null;
     }
-    return <p className={message.includes('removed') ? 'failure' : 'success'}>{message}</p>;
+    return <p className={message.includes('Error') ? 'failure' : 'success'}>{message}</p>;
 }
 
 export default App;
